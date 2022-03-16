@@ -14,7 +14,7 @@
                 </v-card-title>
                 <v-card-text>
                   <CurrencyToggle :currences="currences" v-model="from.currency"></CurrencyToggle>
-                  <v-text-field @keypress="onlyForCurrency"  @input="changeFrom" v-model="from.val"></v-text-field>
+                  <v-text-field @keypress="valueValidation"  @input="changeFrom" v-model="from.val"></v-text-field>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -25,14 +25,14 @@
                 </v-card-title>
                 <v-card-text>
                   <CurrencyToggle  :currences="currences" v-model="to.currency"></CurrencyToggle>
-                  <v-text-field @keypress="onlyForCurrency" @input="changeTo" v-model="to.val"></v-text-field>
+                  <v-text-field @keypress="valueValidation" @input="changeTo" v-model="to.val"></v-text-field>
                 </v-card-text>
               </v-card>
             </v-col>
           </v-row>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>Rate: {{rate}}
+          <v-spacer></v-spacer>{{fee}}Rate: {{rate}}
         </v-card-actions>
       </v-card>
     </v-container>
@@ -50,7 +50,6 @@ export default {
     rate:0.5,
     isFrom:true,
     api_key:'5f7e1fe5173c58aceb9ef61b64e2cc259a4539c2a57013598f501f9988e0df36',
-    fee:0.01,
     from:{
      currency:'USD',
       val:1.000,
@@ -84,7 +83,7 @@ export default {
   }),
   watch: {
     'to.currency': function (){
-          this.changeTo();
+          this.changeFrom();
     },
     'from.currency': function (){
       this.changeFrom();
@@ -100,7 +99,7 @@ export default {
     this.changeFrom();
   },
   methods:{
-    onlyForCurrency ($event) {
+    valueValidation($event) {
       let keyCode = ($event.keyCode ? $event.keyCode : $event.which);
       if ((keyCode < 48 || keyCode > 57) && (keyCode !== 46 || this.price.indexOf('.') != -1)) { // 46 is dot
         $event.preventDefault();
@@ -115,7 +114,7 @@ export default {
         return new Promise((resolve, reject) => {
           axios.get('https://min-api.cryptocompare.com/data/price?fsym='+from+'&tsyms='+to+'&api_key='+that.api_key)
               .then(response => {
-               that.rate=response.data[to]*(1+that.fee);
+               that.rate=response.data[to]*(1-that.fee);
             resolve(response)
           }).catch(error => {
             reject(error)
@@ -146,8 +145,19 @@ export default {
     }
   },
   computed:{
-    pair(){
-      return this.from.currency+this.to.currency;
+    fee(){
+      let fee=0.01
+      if (this.identicalCurrencies){
+        fee=0;
+      }
+      return fee;
+    },
+    identicalCurrencies(){
+      let identical =false;
+      if (this.to.currency==this.from.currency){
+        identical=true
+      }
+      return identical;
     }
   }
 };
