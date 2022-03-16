@@ -6,6 +6,9 @@
           Currency Converter
         </v-card-title>
         <v-card-text>
+          <v-alert v-if="identicalCurrencies" dense type="warning">
+            Same currencies selected
+          </v-alert>
           <v-row>
             <v-col>
               <v-card>
